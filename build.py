@@ -16,12 +16,14 @@ T = {
                noend="No end date listed", claim="Claim for free", back="All free games",
                join="Join on Telegram", other="العربية", empty="No free games right now. Check back soon.",
                how="How to claim", compare="Find it on sale", data="Data from",
-               disc="Some links are affiliate links: we may earn a commission at no extra cost to you."),
+               disc="Some links are affiliate links: we may earn a commission at no extra cost to you.",
+               gone="This page is gone. The free giveaway may have ended."),
     "ar": dict(dir="rtl", tag="ألعاب مجانية يمكنك الحصول عليها الآن", free="مجانًا", ends="ينتهي",
                noend="لا يوجد تاريخ انتهاء", claim="احصل عليها مجانًا", back="كل الألعاب المجانية",
                join="انضم على تيليجرام", other="English", empty="لا توجد ألعاب مجانية الآن. عد قريبًا.",
                how="طريقة الحصول عليها", compare="ابحث عنها بسعر مخفّض", data="البيانات من",
-               disc="بعض الروابط تابعة: قد نحصل على عمولة دون أي تكلفة إضافية عليك."),
+               disc="بعض الروابط تابعة: قد نحصل على عمولة دون أي تكلفة إضافية عليك.",
+               gone="هذه الصفحة غير موجودة. ربما انتهى العرض المجاني."),
 }
 
 CSS = """
@@ -128,6 +130,9 @@ def shell(lang, cfg, title, desc, body, here, there, img=""):
     join = f'<a href="{esc(tg)}" rel="noopener">{L["join"]}</a>' if tg else ""
     disc = f'<p>{L["disc"]}</p>' if any(aff_links("x", cfg)) else ""
     home = "/ar/" if lang == "ar" else "/"
+    cf = (cfg.get("cf_analytics_token") or "").strip()
+    beacon = ('<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon=\''
+              + json.dumps({"token": cf}) + '\'></script>') if cf else ""
     return (f'<!doctype html><html lang="{lang}" dir="{L["dir"]}"><head><meta charset="utf-8">'
             f'<meta name="viewport" content="width=device-width,initial-scale=1">'
             f'<title>{esc(title)}</title><meta name="description" content="{esc(desc)}">{seo}'
@@ -135,7 +140,7 @@ def shell(lang, cfg, title, desc, body, here, there, img=""):
             f'<body><div class="wrap"><header><a class="brand" href="{home}">{esc(cfg["name"][lang])}</a>'
             f'<nav>{join}<a href="{there}" hreflang="{other}">{L["other"]}</a></nav></header>'
             f'<main>{body}</main><footer>{disc}<p>{L["data"]} '
-            f'<a href="https://www.gamerpower.com" rel="noopener">GamerPower.com</a></p></footer></div></body></html>')
+            f'<a href="https://www.gamerpower.com" rel="noopener">GamerPower.com</a></p></footer></div>{beacon}</body></html>')
 
 
 def row(g, lang):
@@ -214,7 +219,10 @@ def post_new(items, cfg):
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     chats = {"en": os.environ.get("TELEGRAM_CHAT_EN", ""), "ar": os.environ.get("TELEGRAM_CHAT_AR", "")}
     sf = STATE / "posted.json"
-    posted = json.loads(sf.read_text()) if sf.exists() else None
+    try:
+        posted = json.loads(sf.read_text()) if sf.exists() else None
+    except ValueError:
+        posted = None
     ids = [g["id"] for g in items]
     STATE.mkdir(exist_ok=True)
     if posted is None or not (token and any(chats.values())):
@@ -249,9 +257,16 @@ def main():
         write(out / "index.html", index_page(items, lang, cfg))
         for g in items:
             write(SITE / path_for(g, lang).lstrip("/"), detail_page(g, lang, cfg))
-    extras(items, cfg)
-    n = post_new(items, cfg)
-    print(f"built {len(items)} giveaways, posted {n} to Telegram")
+    nf = (f'<h1>{T["en"]["gone"]}</h1><p><a href="/">{T["en"]["back"]}</a></p>'
+          f'<div lang="ar" dir="rtl"><h2>{T["ar"]["gone"]}</h2><p><a href="/ar/">{T["ar"]["back"]}</a></p></div>')
+    write(SITE / "404.html", shell("en", cfg, "404", T["en"]["gone"], nf, "/", "/ar/"))
+    # each optional piece is isolated: if one fails, the site still gets published
+    for step in (extras, post_new):
+        try:
+            step(items, cfg)
+        except Exception as e:
+            print(f"{step.__name__} failed (site is still fine): {e}", file=sys.stderr)
+    print(f"built {len(items)} giveaways")
 
 
 if __name__ == "__main__":
