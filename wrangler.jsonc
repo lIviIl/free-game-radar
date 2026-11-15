@@ -1,5 +1,8 @@
 {
   "name": "free-game-radar",
   "compatibility_date": "2026-11-13",
-  "assets": { "directory": "./site", "not_found_handling": "404-page" }
+  "assets": {
+    "directory": "./site",
+    "not_found_handling": "404-page"
+  }
 }
