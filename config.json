@@ -1,11 +1,30 @@
 {
-  "site_url": "https://free-game-radar.99th-brittanian-emperor.workers.dev/",
-  "name": {"en": "Free Game Radar", "ar": "رادار الألعاب المجانية"},
-  "telegram_url": {"en": "", "ar": ""},
+  "site_url": "",
+  "cf_analytics_token": "",
+  "name": {
+    "en": "Free Game Radar",
+    "ar": "رادار الألعاب المجانية"
+  },
+  "telegram_url": {
+    "en": "",
+    "ar": ""
+  },
   "max_items": 40,
+  "deals_enabled": true,
+  "max_deals": 60,
+  "min_discount": 30,
   "affiliates": {
-    "Instant Gaming": {"enabled": false, "url": ""},
-    "Eneba": {"enabled": false, "url": ""},
-    "Humble Bundle": {"enabled": false, "url": ""}
+    "Instant Gaming": {
+      "enabled": false,
+      "url": ""
+    },
+    "Eneba": {
+      "enabled": false,
+      "url": ""
+    },
+    "Humble Bundle": {
+      "enabled": false,
+      "url": ""
+    }
   }
 }
