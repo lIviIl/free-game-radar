@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://free-game-radar.99th-brittanian-emperor.workers.dev/sitemap.xml
